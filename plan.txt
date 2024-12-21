@@ -1,0 +1,9 @@
+Game Manager:
+  has board state
+  has current player turn
+UI:
+  does all the interacting with user
+Player:
+  has functions to get player name and move
+Input Validation:
+  logic for validating input
