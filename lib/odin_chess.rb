@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative("ui")
+require_relative("game_manager")
 
-game = OdinChess::UI.new
+game = OdinChess::GameManager.new
 game.play_game
