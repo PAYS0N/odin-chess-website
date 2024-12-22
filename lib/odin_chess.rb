@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
-# module to store chess game
-module OdinChess
-end
+require_relative("ui")
+
+game = OdinChess::UI.new
+game.play_game
