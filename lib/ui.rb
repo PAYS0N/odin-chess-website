@@ -35,5 +35,19 @@ module OdinChess
       test = ->(string) { string == "SQ" || game.valid?(string) }
       OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
     end
+
+    def self.display_board(game_state)
+      puts "-------------------------------------"
+      7.downto(0) do |i|
+        print "#{i + 1}   "
+        game_state[i].each do |piece|
+          print "|#{piece.piece_to_s}"
+        end
+        puts "|"
+        puts "-------------------------------------"
+      end
+      puts "    |   |   |   |   |   |   |   |   |"
+      puts "    | a | b | c | d | e | f | g | h |"
+    end
   end
 end

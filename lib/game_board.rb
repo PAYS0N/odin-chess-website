@@ -2,22 +2,58 @@
 
 require_relative("piece")
 
+require "json"
+
 # module to store chess game
 module OdinChess
   # class to store game state and logic
   class GameBoard
-    attr_reader :game_ended
+    attr_reader :game_ended, :game_state
 
-    def initialize(player1, player2, active_player)
+    def initialize(player1, player2, game_state = [])
       @player1 = player1
       @player2 = player2
-      @active_player = active_player
       @game_ended = false
-      @game_state = []
+      @game_state = game_state
+      return unless @game_state == []
+
       8.times do
         @game_state.push([])
       end
       setup_game_state
+    end
+
+    def to_json(*_args)
+      { player1: @player1.to_obj, player2: @player2.to_obj, game_state: board_to_obj(@game_state) }.to_json
+    end
+
+    def board_to_obj(state)
+      json_state = []
+      state.each_with_index do |row, i|
+        json_state.push([])
+        row.each do |piece|
+          json_state[i].push(piece.to_obj)
+        end
+      end
+      json_state
+    end
+
+    def self.from_json(json_str)
+      data = JSON.parse(json_str)
+      player1 = OdinChess::Player.from_obj(data["player1"])
+      player2 = OdinChess::Player.from_obj(data["player2"])
+      new(player1, player2, board_from_obj(data["game_state"]))
+    end
+
+    def board_from_obj(obj)
+      state = []
+      8.times do |i|
+        state.push([])
+        8.times do |j|
+          state[i].push(OdinChess::Piece.from_obj(obj[i][j]))
+        end
+      end
+      state
     end
 
     def setup_game_state
@@ -50,7 +86,7 @@ module OdinChess
 
     def setup_empty_row(row)
       8.times do
-        @game_state[row].push(0)
+        @game_state[row].push(OdinChess::Piece.new("g", "empty"))
       end
     end
 
