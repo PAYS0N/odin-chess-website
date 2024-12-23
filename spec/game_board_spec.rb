@@ -4,7 +4,7 @@ require_relative("../lib/game_board")
 
 describe OdinChess::GameBoard do
   describe "#parse" do
-    subject(:board_parse) { described_class.new(0, 0, 0) }
+    subject(:board_parse) { described_class.new(0, 0) }
 
     context "when given \"0-0\"" do
       it "calls parse_castle" do
@@ -35,7 +35,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [R, 0, 7, 0, 6]" do
         parse = board_parse.parse("Ra8a7")
-        expect(parse).to eq(["R", 0, 7, 0, 6, 0])
+        expect(parse).to eq(["R", 7, 0, 6, 0, 0])
       end
     end
 
@@ -46,7 +46,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [P, 4, 5, 4, 6]" do
         parse = board_parse.parse("e6e7")
-        expect(parse).to eq(["P", 4, 5, 4, 6, 0])
+        expect(parse).to eq(["P", 5, 4, 6, 4, 0])
       end
     end
 
@@ -57,7 +57,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [B, 0, 7, 0, 6]" do
         parse = board_parse.parse("Ba8xa7")
-        expect(parse).to eq(["B", 0, 7, 0, 6, 1])
+        expect(parse).to eq(["B", 7, 0, 6, 0, 1])
       end
     end
 
@@ -68,7 +68,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [P, 4, 3, 3, 4]" do
         parse = board_parse.parse("e4xd5")
-        expect(parse).to eq(["P", 4, 3, 3, 4, 1])
+        expect(parse).to eq(["P", 3, 4, 4, 3, 1])
       end
     end
 
@@ -83,7 +83,7 @@ describe OdinChess::GameBoard do
   end
 
   describe "#check_technically_valid" do
-    subject(:board_check) { described_class.new(0, 0, 0) }
+    subject(:board_check) { described_class.new(0, 0) }
 
     context "when given valid moves" do
       [["Castle"], ["Long Castle"], ["R", 0, 7, 0, 6, 0], ["P", 4, 5, 4, 6, 0], ["B", 0, 7, 0, 6, 1], ["P", 4, 3, 3, 4, 1]].each do |input|
@@ -98,6 +98,114 @@ describe OdinChess::GameBoard do
         it "returns false for #{input.inspect}" do
           check = board_check.check_technically_valid(board_check.parse(input))
           expect(check).to be_falsy
+        end
+      end
+    end
+  end
+
+  describe "#piece_at_cell" do
+    subject(:board_piece_logic) { described_class.new(0, 0) }
+    context "when game_state is unchanged" do
+      before do
+        allow_any_instance_of(Kernel).to receive(:puts)
+      end
+      context "when given valid pairs" do
+        [[[1, 0], "P"], [[6, 5], "P"], [[0, 0], "R"], [[7, 7], "R"], [[0, 3], "Q"]].each do |input|
+          it "returns true for #{input.inspect}" do
+            check = board_piece_logic.piece_at_cell(input[1], input[0])
+            expect(check).to be_truthy
+          end
+        end
+      end
+      context "when given invalid moves" do
+        [[[0, 1], "R"], [[0, 1], "Q"], [[4, 4], "P"]].each do |input|
+          it "returns false for #{input.inspect}" do
+            check = board_piece_logic.piece_at_cell(input[1], input[0])
+            expect(check).to be_falsy
+          end
+        end
+      end
+    end
+  end
+
+  describe "#target_cell_ok" do
+    let(:player1) { instance_double("player") }
+    let(:player2) { instance_double("player") }
+    subject(:board_target) { described_class.new(player1, player2) }
+    context "when game_state is unchanged" do
+      before do
+        allow_any_instance_of(Kernel).to receive(:puts)
+      end
+      context "when moving to empty cell" do
+        before do
+          allow(player1).to receive(:active).and_return(true)
+          allow(player2).to receive(:active).and_return(false)
+        end
+        [[[2, 0], 0], [[5, 2], 0], [[4, 4], 0]].each do |input|
+          it "returns true for #{input.inspect}" do
+            check = board_target.target_cell_ok(input[0], input[1])
+            expect(check).to be_truthy
+          end
+        end
+      end
+      context "when capturing to empty cell" do
+        before do
+          allow(player1).to receive(:active).and_return(true)
+          allow(player2).to receive(:active).and_return(false)
+        end
+        [[[2, 0], 1], [[5, 2], 1], [[4, 4], 1]].each do |input|
+          it "returns false for #{input.inspect}" do
+            check = board_target.target_cell_ok(input[0], input[1])
+            expect(check).to be_falsy
+          end
+        end
+      end
+      context "when white is capturing to tile with black" do
+        before do
+          allow(player1).to receive(:active).and_return(true)
+          allow(player2).to receive(:active).and_return(false)
+        end
+        [[[7, 4], 1], [[6, 2], 1], [[7, 4], 1]].each do |input|
+          it "returns true for #{input.inspect}" do
+            check = board_target.target_cell_ok(input[0], input[1])
+            expect(check).to be_truthy
+          end
+        end
+      end
+      context "when white is capturing to tile with white" do
+        before do
+          allow(player1).to receive(:active).and_return(true)
+          allow(player2).to receive(:active).and_return(false)
+        end
+        [[[1, 4], 1], [[1, 2], 1], [[0, 4], 1]].each do |input|
+          it "returns false for #{input.inspect}" do
+            check = board_target.target_cell_ok(input[0], input[1])
+            expect(check).to be_falsy
+          end
+        end
+      end
+      context "when black is capturing to tile with black" do
+        before do
+          allow(player1).to receive(:active).and_return(false)
+          allow(player2).to receive(:active).and_return(true)
+        end
+        [[[7, 4], 1], [[6, 2], 1], [[7, 4], 1]].each do |input|
+          it "returns false for #{input.inspect}" do
+            check = board_target.target_cell_ok(input[0], input[1])
+            expect(check).to be_falsy
+          end
+        end
+      end
+      context "when black is capturing to tile with white" do
+        before do
+          allow(player1).to receive(:active).and_return(false)
+          allow(player2).to receive(:active).and_return(true)
+        end
+        [[[1, 4], 1], [[1, 2], 1], [[0, 4], 1]].each do |input|
+          it "returns true for #{input.inspect}" do
+            check = board_target.target_cell_ok(input[0], input[1])
+            expect(check).to be_truthy
+          end
         end
       end
     end

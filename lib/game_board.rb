@@ -121,19 +121,19 @@ module OdinChess
     end
 
     def parse_piece_capture(move)
-      [move[0], move[1].ord - 97, move[2].to_i - 1, move[4].ord - 97, move[5].to_i - 1, 1]
+      [move[0], move[2].to_i - 1, move[1].ord - 97, move[5].to_i - 1, move[4].ord - 97, 1]
     end
 
     def parse_pawn_capture(move)
-      ["P", move[0].ord - 97, move[1].to_i - 1, move[3].ord - 97, move[4].to_i - 1, 1]
+      ["P", move[1].to_i - 1, move[0].ord - 97, move[4].to_i - 1, move[3].ord - 97, 1]
     end
 
     def parse_piece_move(move)
-      [move[0], move[1].ord - 97, move[2].to_i - 1, move[3].ord - 97, move[4].to_i - 1, 0]
+      [move[0], move[2].to_i - 1, move[1].ord - 97, move[4].to_i - 1, move[3].ord - 97, 0]
     end
 
     def parse_pawn_move(move)
-      ["P", move[0].ord - 97, move[1].to_i - 1, move[2].ord - 97, move[3].to_i - 1, 0]
+      ["P", move[1].to_i - 1, move[0].ord - 97, move[3].to_i - 1, move[2].ord - 97, 0]
     end
 
     def valid?(move)
@@ -148,8 +148,39 @@ module OdinChess
     end
 
     def check_logically_valid(move)
-      puts "no logical check for #{move}"
+      piece_can_move(move) &&
+        piece_at_cell(move[0], [move[1], move[2]]) &&
+        target_cell_ok([move[3], move[4]], move[5]) &&
+        move_doesnt_lose(move)
+    end
+
+    def piece_at_cell(piece, cell)
+      passes = piece == @game_state[cell[0]][cell[1]].piece_to_s.strip
+      if passes == false
+        puts "The piece you indicated #{piece} is not at that starting cell [#{cell[0]}, #{cell[1]}]. #{@game_state[cell[0]][cell[1]].piece_to_s.strip} is."
+      end
+      passes
+    end
+
+    def target_cell_ok(cell, move_type)
+      return @game_state[cell[0]][cell[1]].type == "empty" if move_type.zero?
+
+      target_color = @player1.active == true ? "b" : "w"
+      @game_state[cell[0]][cell[1]].color == target_color
+    end
+
+    def piece_can_move(move)
+      puts "Unchecked if piece can move: #{move}"
       true
+    end
+
+    def move_doesnt_lose(move)
+      puts "Unchecked if #{move} loses"
+      true
+    end
+
+    def grab_active_player
+      @player1.active ? @player1 : @player2
     end
   end
 end

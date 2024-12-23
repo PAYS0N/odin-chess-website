@@ -34,12 +34,15 @@ module OdinChess
     def player_setup
       @player1.name = OdinChess::UI.grab_name
       @player2.name = OdinChess::UI.grab_name
-      (OdinChess::UI.grab_first(@player1.name, @player2.name) == @player1.name ? @player1 : @player2).active = true
+      first_player_name = OdinChess::UI.grab_first(@player1.name, @player2.name)
+      (first_player_name == @player1.name ? @player1 : @player2).active = true
+      (first_player_name == @player1.name ? @player1 : @player2).color = "w"
+      (first_player_name == @player1.name ? @player2 : @player1).color = "b"
     end
 
     def take_turn
       OdinChess::UI.display_board(@game_board.game_state)
-      move = OdinChess::UI.grab_move(@game_board)
+      move = OdinChess::UI.grab_move(@game_board, @game_board.grab_active_player)
       return save_quit if move == "SQ"
 
       @game_board.apply_move(move)
