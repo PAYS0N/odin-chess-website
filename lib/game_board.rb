@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative("piece")
+
 # module to store chess game
 module OdinChess
   # class to store game state and logic
@@ -11,13 +13,49 @@ module OdinChess
       @player2 = player2
       @active_player = active_player
       @game_ended = false
-      @game_state = 0
+      @game_state = []
+      8.times do
+        @game_state.push([])
+      end
+      setup_game_state
+    end
+
+    def setup_game_state
+      setup_home_row(0, "w")
+      setup_pawn_row(1, "w")
+      setup_empty_row(2)
+      setup_empty_row(3)
+      setup_empty_row(4)
+      setup_empty_row(5)
+      setup_pawn_row(6, "b")
+      setup_home_row(7, "b")
+    end
+
+    def setup_home_row(row, color)
+      @game_state[row].push(OdinChess::Piece.new(color, "rook"))
+      @game_state[row].push(OdinChess::Piece.new(color, "knight"))
+      @game_state[row].push(OdinChess::Piece.new(color, "bishop"))
+      @game_state[row].push(OdinChess::Piece.new(color, "queen"))
+      @game_state[row].push(OdinChess::Piece.new(color, "king"))
+      @game_state[row].push(OdinChess::Piece.new(color, "bishop"))
+      @game_state[row].push(OdinChess::Piece.new(color, "knight"))
+      @game_state[row].push(OdinChess::Piece.new(color, "rook"))
+    end
+
+    def setup_pawn_row(row, color)
+      8.times do
+        @game_state[row].push(OdinChess::Piece.new(color, "pawn"))
+      end
+    end
+
+    def setup_empty_row(row)
+      8.times do
+        @game_state[row].push(0)
+      end
     end
 
     def apply_move(move)
-      @game_state += 1
       puts "#{move} not applied"
-      @game_ended = true if @game_state > 9
     end
 
     def parse(move)

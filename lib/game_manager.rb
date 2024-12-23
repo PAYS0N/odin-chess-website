@@ -24,7 +24,7 @@ module OdinChess
       @player1 = OdinChess::Player.new
       @player2 = OdinChess::Player.new
       active_player = player_setup
-      @game = OdinChess::GameBoard.new(@player1, @player2, active_player)
+      @game_board = OdinChess::GameBoard.new(@player1, @player2, active_player)
     end
 
     def load_game
@@ -38,7 +38,7 @@ module OdinChess
     end
 
     def take_turn
-      move = OdinChess::UI.grab_move(@game)
+      move = OdinChess::UI.grab_move(@game_board)
       return save_quit if move == "SQ"
 
       @game.apply_move(move)
