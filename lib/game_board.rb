@@ -16,7 +16,7 @@ module OdinChess
 
     def apply_move(move)
       @game_state += 1
-      puts "move not applied"
+      puts "#{move} not applied"
       @game_ended = true if @game_state > 9
     end
 
@@ -47,23 +47,34 @@ module OdinChess
     end
 
     def parse_piece_capture(move)
-      [move[0], move[1].ord - 97, move[2].to_i - 1, move[4].ord - 97, move[5].to_i - 1]
+      [move[0], move[1].ord - 97, move[2].to_i - 1, move[4].ord - 97, move[5].to_i - 1, 1]
     end
 
     def parse_pawn_capture(move)
-      ["P", move[0].ord - 97, move[1].to_i - 1, move[3].ord - 97, move[4].to_i - 1]
+      ["P", move[0].ord - 97, move[1].to_i - 1, move[3].ord - 97, move[4].to_i - 1, 1]
     end
 
     def parse_piece_move(move)
-      [move[0], move[1].ord - 97, move[2].to_i - 1, move[3].ord - 97, move[4].to_i - 1]
+      [move[0], move[1].ord - 97, move[2].to_i - 1, move[3].ord - 97, move[4].to_i - 1, 0]
     end
 
     def parse_pawn_move(move)
-      ["P", move[0].ord - 97, move[1].to_i - 1, move[2].ord - 97, move[3].to_i - 1]
+      ["P", move[0].ord - 97, move[1].to_i - 1, move[2].ord - 97, move[3].to_i - 1, 0]
     end
 
     def valid?(move)
-      puts "unvalidated move: #{move}"
+      check_technically_valid(move) && check_logically_valid(move)
+    end
+
+    def check_technically_valid(move)
+      return true if ["Castle", "Long castle"].include?(move)
+      return false if move == ["Invalid"]
+
+      move[1..].all? { |int| int.between?(0, 7) }
+    end
+
+    def check_logically_valid(move)
+      puts "no logical check for #{move}"
       true
     end
   end

@@ -31,8 +31,8 @@ module OdinChess
     def self.grab_move(game)
       prompt = "What is your move? You can also save and quit by entering \"SQ\""
       error_msg = "Please enter a valid move. Instead, to save and quit, enter \"SQ\""
-      prep_proc = ->(input) { game.parse(input.strip) }
-      test = ->(string) { game.valid?(string) || string == "SQ" }
+      prep_proc = ->(input) { input.strip == "SQ" ? "SQ" : game.parse(input.strip) }
+      test = ->(string) { string == "SQ" || game.valid?(string) }
       OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
     end
   end

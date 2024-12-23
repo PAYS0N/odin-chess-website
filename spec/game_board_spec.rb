@@ -35,7 +35,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [R, 0, 7, 0, 6]" do
         parse = board_parse.parse("Ra8a7")
-        expect(parse).to eq(["R", 0, 7, 0, 6])
+        expect(parse).to eq(["R", 0, 7, 0, 6, 0])
       end
     end
 
@@ -46,7 +46,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [P, 4, 5, 4, 6]" do
         parse = board_parse.parse("e6e7")
-        expect(parse).to eq(["P", 4, 5, 4, 6])
+        expect(parse).to eq(["P", 4, 5, 4, 6, 0])
       end
     end
 
@@ -57,7 +57,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [B, 0, 7, 0, 6]" do
         parse = board_parse.parse("Ba8xa7")
-        expect(parse).to eq(["B", 0, 7, 0, 6])
+        expect(parse).to eq(["B", 0, 7, 0, 6, 1])
       end
     end
 
@@ -68,7 +68,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [P, 4, 3, 3, 4]" do
         parse = board_parse.parse("e4xd5")
-        expect(parse).to eq(["P", 4, 3, 3, 4])
+        expect(parse).to eq(["P", 4, 3, 3, 4, 1])
       end
     end
 
@@ -77,6 +77,27 @@ describe OdinChess::GameBoard do
         it "returns non-valid move for #{input.inspect}" do
           parse = board_parse.parse(input)
           expect(parse.shift == "Invalid" || parse.any? { |char| !char.between?(0, 7) }).to be_truthy
+        end
+      end
+    end
+  end
+
+  describe "#check_technically_valid" do
+    subject(:board_check) { described_class.new(0, 0, 0) }
+
+    context "when given valid moves" do
+      [["Castle"], ["Long Castle"], ["R", 0, 7, 0, 6, 0], ["P", 4, 5, 4, 6, 0], ["B", 0, 7, 0, 6, 1], ["P", 4, 3, 3, 4, 1]].each do |input|
+        it "returns true for #{input.inspect}" do
+          check = board_check.check_technically_valid(input)
+          expect(check).to be_truthy
+        end
+      end
+    end
+    context "when given invalid moves" do
+      ["11111", "Ra88a7", "xxxxXx", "", "Rj4of", "j1xj2", "PE3E4", "00-00", "e4e5Px", "e4w5"].each do |input|
+        it "returns false for #{input.inspect}" do
+          check = board_check.check_technically_valid(board_check.parse(input))
+          expect(check).to be_falsy
         end
       end
     end
