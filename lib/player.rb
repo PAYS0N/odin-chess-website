@@ -21,5 +21,9 @@ module OdinChess
     def self.from_obj(obj)
       new(obj["name"], obj["active"], obj["color"])
     end
+
+    def swap_active
+      @active = !@active
+    end
   end
 end

@@ -91,7 +91,62 @@ module OdinChess
     end
 
     def apply_move(move)
-      puts "#{move} not applied"
+      return castle(move) if move.length == 1
+
+      original_piece = @game_state[move[1]][move[2]]
+      @game_state[move[3]][move[4]] = move[0].new(original_piece.color)
+      @game_state[move[3]][move[4]].has_moved = true
+      @game_state[move[1]][move[2]] = OdinChess::EmptyPiece.new("g")
+    end
+
+    def castle(move)
+      @player1.active == true ? white_castle(move) : black_castle(move)
+    end
+
+    def white_castle(move)
+      move == ["Castle"] ? white_short_castle : white_long_castle
+    end
+
+    def black_castle(move)
+      move == ["Castle"] ? black_short_castle : black_long_castle
+    end
+
+    def white_short_castle
+      @game_state[0][4] = EmptyPiece.new("g")
+      @game_state[0][5] = Rook.new("w")
+      @game_state[0][5].has_moved = true
+      @game_state[0][6] = King.new("w")
+      @game_state[0][6].has_moved = true
+      @game_state[0][7] = EmptyPiece.new("g")
+    end
+
+    def white_long_castle
+      @game_state[0][4] = EmptyPiece.new("g")
+      @game_state[0][3] = Rook.new("w")
+      @game_state[0][3].has_moved = true
+      @game_state[0][2] = King.new("w")
+      @game_state[0][2].has_moved = true
+      @game_state[0][1] = EmptyPiece.new("g")
+      @game_state[0][0] = EmptyPiece.new("g")
+    end
+
+    def black_short_castle
+      @game_state[7][4] = EmptyPiece.new("g")
+      @game_state[7][5] = Rook.new("w")
+      @game_state[7][5].has_moved = true
+      @game_state[7][6] = King.new("w")
+      @game_state[7][6].has_moved = true
+      @game_state[7][7] = EmptyPiece.new("g")
+    end
+
+    def black_long_castle
+      @game_state[7][4] = EmptyPiece.new("g")
+      @game_state[7][3] = Rook.new("w")
+      @game_state[7][3].has_moved = true
+      @game_state[7][2] = King.new("w")
+      @game_state[7][2].has_moved = true
+      @game_state[7][1] = EmptyPiece.new("g")
+      @game_state[7][0] = EmptyPiece.new("g")
     end
 
     def parse(move)
@@ -150,25 +205,43 @@ module OdinChess
     end
 
     def check_logically_valid(move)
-      piece_at_cell(move[0], [move[1], move[2]]) &&
-        target_cell_ok([move[3], move[4]], move[5]) &&
-        piece_can_move(move) &&
-        move_doesnt_lose(move)
+      if move.length == 1
+        castle_valid?(move)
+      else
+        piece_at_cell(move[0], [move[1], move[2]]) &&
+          piece_correct_color([move[1], move[2]]) &&
+          target_cell_ok([move[3], move[4]], move[5]) &&
+          piece_can_move(move) &&
+          move_doesnt_lose(move)
+      end
     end
 
     def piece_at_cell(piece, cell)
       passes = @game_state[cell[0]][cell[1]].is_a?(piece)
-      if passes == false
+      unless passes
         puts "The piece you indicated #{piece} is not at that starting cell [#{cell[0]}, #{cell[1]}]. #{@game_state[cell[0]][cell[1]].piece_to_s.strip} is."
       end
       passes
     end
 
+    def piece_correct_color(cell)
+      passes = @game_state[cell[0]][cell[1]].color == (@player1.active == true ? "w" : "b")
+      puts "The piece you indicated is not yours." unless passes
+      passes
+    end
+
     def target_cell_ok(cell, move_type)
-      return @game_state[cell[0]][cell[1]].is_a?(EmptyPiece) if move_type.zero?
+      if move_type.zero?
+        passes = @game_state[cell[0]][cell[1]].is_a?(EmptyPiece)
+        puts "That cell is occupied by #{@game_state[cell[0]][cell[1]]}." unless passes
+
+        return passes
+      end
 
       target_color = @player1.active == true ? "b" : "w"
-      @game_state[cell[0]][cell[1]].color == target_color
+      passes = @game_state[cell[0]][cell[1]].color == target_color
+      puts "You can only take #{target_color} pieces." unless passes
+      passes
     end
 
     def piece_can_move(move)
@@ -177,12 +250,58 @@ module OdinChess
               else
                 @game_state[move[1]][move[2]].grab_available_moves(@game_state, move)
               end
-      cells.include?([move[3], move[4]])
+      passes = cells.include?([move[3], move[4]])
+      puts "That piece can only go to #{cells.inspect}." unless passes
+      passes
     end
 
     def move_doesnt_lose(move)
       puts "Unchecked if #{move} loses"
       true
+    end
+
+    def castle_valid?(type)
+      if type == ["Castle"]
+        if @player1.active == true
+          white_short_castle_valid?
+        else
+          black_short_castle_valid?
+        end
+      elsif @player1.active == true
+        white_long_castle_valid?
+      else
+        black_long_castle_valid?
+      end
+    end
+
+    def white_short_castle_valid?
+      @game_state[0][4].is_a?(King) && !@game_state[0][4].has_moved &&
+        @game_state[0][5].is_a?(EmptyPiece) &&
+        @game_state[0][6].is_a?(EmptyPiece) &&
+        @game_state[0][7].is_a?(Rook) && !@game_state[0][7].has_moved
+    end
+
+    def black_short_castle_valid?
+      @game_state[7][4].is_a?(King) && !@game_state[7][4].has_moved &&
+        @game_state[7][5].is_a?(EmptyPiece) &&
+        @game_state[7][6].is_a?(EmptyPiece) &&
+        @game_state[7][7].is_a?(Rook) && !@game_state[7][7].has_moved
+    end
+
+    def white_long_castle_valid?
+      @game_state[0][0].is_a?(Rook) && !@game_state[0][0].has_moved &&
+        @game_state[0][1].is_a?(EmptyPiece) &&
+        @game_state[0][2].is_a?(EmptyPiece) &&
+        @game_state[0][3].is_a?(EmptyPiece) &&
+        @game_state[0][4].is_a?(King) && !@game_state[0][4].has_moved
+    end
+
+    def black_long_castle_valid?
+      @game_state[7][0].is_a?(Rook) && !@game_state[7][0].has_moved &&
+        @game_state[7][1].is_a?(EmptyPiece) &&
+        @game_state[7][2].is_a?(EmptyPiece) &&
+        @game_state[7][3].is_a?(EmptyPiece) &&
+        @game_state[7][4].is_a?(King) && !@game_state[7][4].has_moved
     end
 
     def grab_active_player

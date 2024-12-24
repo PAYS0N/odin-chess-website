@@ -46,6 +46,8 @@ module OdinChess
       return save_quit if move == "SQ"
 
       @game_board.apply_move(move)
+      @player1.swap_active
+      @player2.swap_active
       return game_over if @game_board.game_ended
 
       take_turn
