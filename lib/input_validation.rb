@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# module to store chess game
 module OdinChess
   # methods to get clean input from user
   class InputValidation

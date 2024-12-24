@@ -15,6 +15,7 @@ module OdinChess
       @player2 = player2
       @game_ended = false
       @game_state = game_state
+      @in_check = { w: false, b: false }
       return unless @game_state == []
 
       8.times do
@@ -93,10 +94,18 @@ module OdinChess
     def apply_move(move)
       return castle(move) if move.length == 1
 
-      original_piece = @game_state[move[1]][move[2]]
-      @game_state[move[3]][move[4]] = move[0].new(original_piece.color)
+      @original_piece = @game_state[move[1]][move[2]]
+      @original_target = @game_state[move[3]][move[4]]
+      @game_state[move[3]][move[4]] = move[0].new(@original_piece.color)
       @game_state[move[3]][move[4]].has_moved = true
       @game_state[move[1]][move[2]] = OdinChess::EmptyPiece.new("g")
+    end
+
+    def unapply_move(move)
+      return uncastle(move) if move.length == 1
+
+      @game_state[move[1]][move[2]] = @original_piece
+      @game_state[move[3]][move[4]] = @original_target
     end
 
     def castle(move)
@@ -109,6 +118,18 @@ module OdinChess
 
     def black_castle(move)
       move == ["Castle"] ? black_short_castle : black_long_castle
+    end
+
+    def uncastle(move)
+      @player1.active == true ? unwhite_castle(move) : unblack_castle(move)
+    end
+
+    def unwhite_castle(move)
+      move == ["Castle"] ? unwhite_short_castle : unwhite_long_castle
+    end
+
+    def unblack_castle(move)
+      move == ["Castle"] ? unblack_short_castle : unblack_long_castle
     end
 
     def white_short_castle
@@ -132,21 +153,51 @@ module OdinChess
 
     def black_short_castle
       @game_state[7][4] = EmptyPiece.new("g")
-      @game_state[7][5] = Rook.new("w")
+      @game_state[7][5] = Rook.new("b")
       @game_state[7][5].has_moved = true
-      @game_state[7][6] = King.new("w")
+      @game_state[7][6] = King.new("b")
       @game_state[7][6].has_moved = true
       @game_state[7][7] = EmptyPiece.new("g")
     end
 
     def black_long_castle
       @game_state[7][4] = EmptyPiece.new("g")
-      @game_state[7][3] = Rook.new("w")
+      @game_state[7][3] = Rook.new("b")
       @game_state[7][3].has_moved = true
-      @game_state[7][2] = King.new("w")
+      @game_state[7][2] = King.new("b")
       @game_state[7][2].has_moved = true
       @game_state[7][1] = EmptyPiece.new("g")
       @game_state[7][0] = EmptyPiece.new("g")
+    end
+
+    def unwhite_short_castle
+      @game_state[0][4] = King.new("w")
+      @game_state[0][5] = EmptyPiece.new("g")
+      @game_state[0][6] = EmptyPiece.new("g")
+      @game_state[0][7] = Rook.new("w")
+    end
+
+    def unwhite_long_castle
+      @game_state[0][4] = King.new("w")
+      @game_state[0][3] = EmptyPiece.new("g")
+      @game_state[0][2] = EmptyPiece.new("g")
+      @game_state[0][1] = EmptyPiece.new("g")
+      @game_state[0][0] = Rook.new("w")
+    end
+
+    def unblack_short_castle
+      @game_state[7][4] = King.new("b")
+      @game_state[7][5] = EmptyPiece.new("g")
+      @game_state[7][6] = EmptyPiece.new("g")
+      @game_state[7][7] = Rook.new("b")
+    end
+
+    def unblack_long_castle
+      @game_state[7][4] = King.new("b")
+      @game_state[7][3] = EmptyPiece.new("g")
+      @game_state[7][2] = EmptyPiece.new("g")
+      @game_state[7][1] = EmptyPiece.new("g")
+      @game_state[7][0] = Rook.new("b")
     end
 
     def parse(move)
@@ -256,8 +307,36 @@ module OdinChess
     end
 
     def move_doesnt_lose(move)
-      puts "Unchecked if #{move} loses"
-      true
+      update_check(move)
+      turn_color = @player1.active == true ? :w : :b
+      puts "Check." if !@in_check[turn_color] && @in_check[turn_color == :w ? :b : :w]
+      !@in_check[turn_color]
+    end
+
+    def update_check(move)
+      apply_move(move)
+      possible_captures_white = []
+      possible_captures_black = []
+      white_king = []
+      black_king = []
+      @game_state.each_with_index do |row, i|
+        row.each_with_index do |piece, j|
+          if piece.color == "w"
+            white_king = [i, j] if piece.is_a?(King)
+          elsif piece.is_a?(King)
+            black_king = [i, j]
+          end
+          piece.grab_available_captures(@game_state, [0, i, j]).each do |capture|
+            if piece.color == "w"
+              possible_captures_white.append(capture)
+            else
+              possible_captures_black.append(capture)
+            end
+          end
+        end
+      end
+      @in_check = { w: possible_captures_black.include?(white_king), b: possible_captures_white.include?(black_king) }
+      unapply_move(move)
     end
 
     def castle_valid?(type)

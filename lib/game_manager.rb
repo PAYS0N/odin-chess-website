@@ -5,7 +5,6 @@ require_relative("player")
 require_relative("input_validation")
 require_relative("ui")
 
-# module to store chess game
 module OdinChess
   # class that stores logic for interacting with user
   class GameManager
