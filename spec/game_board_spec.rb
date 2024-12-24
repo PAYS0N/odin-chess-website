@@ -35,7 +35,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [R, 0, 7, 0, 6]" do
         parse = board_parse.parse("Ra8a7")
-        expect(parse).to eq(["R", 7, 0, 6, 0, 0])
+        expect(parse).to eq([OdinChess::Rook, 7, 0, 6, 0, 0])
       end
     end
 
@@ -46,7 +46,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [P, 4, 5, 4, 6]" do
         parse = board_parse.parse("e6e7")
-        expect(parse).to eq(["P", 5, 4, 6, 4, 0])
+        expect(parse).to eq([OdinChess::Pawn, 5, 4, 6, 4, 0])
       end
     end
 
@@ -57,7 +57,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [B, 0, 7, 0, 6]" do
         parse = board_parse.parse("Ba8xa7")
-        expect(parse).to eq(["B", 7, 0, 6, 0, 1])
+        expect(parse).to eq([OdinChess::Bishop, 7, 0, 6, 0, 1])
       end
     end
 
@@ -68,7 +68,7 @@ describe OdinChess::GameBoard do
       end
       it "returns [P, 4, 3, 3, 4]" do
         parse = board_parse.parse("e4xd5")
-        expect(parse).to eq(["P", 3, 4, 4, 3, 1])
+        expect(parse).to eq([OdinChess::Pawn, 3, 4, 4, 3, 1])
       end
     end
 
@@ -106,21 +106,21 @@ describe OdinChess::GameBoard do
   describe "#piece_at_cell" do
     subject(:board_piece_logic) { described_class.new(0, 0) }
     context "when game_state is unchanged" do
-      before do
-        allow_any_instance_of(Kernel).to receive(:puts)
-      end
+      # before do
+      #   allow_any_instance_of(Kernel).to receive(:puts)
+      # end
       context "when given valid pairs" do
-        [[[1, 0], "P"], [[6, 5], "P"], [[0, 0], "R"], [[7, 7], "R"], [[0, 3], "Q"]].each do |input|
+        [[OdinChess::Pawn, [1, 0]], [OdinChess::Pawn, [6, 5]], [OdinChess::Rook, [0, 0]], [OdinChess::Rook, [7, 7]], [OdinChess::Queen, [0, 3]]].each do |input|
           it "returns true for #{input.inspect}" do
-            check = board_piece_logic.piece_at_cell(input[1], input[0])
+            check = board_piece_logic.piece_at_cell(input[0], input[1])
             expect(check).to be_truthy
           end
         end
       end
       context "when given invalid moves" do
-        [[[0, 1], "R"], [[0, 1], "Q"], [[4, 4], "P"]].each do |input|
+        [[OdinChess::Rook, [0, 1]], [OdinChess::Queen, [0, 1]], [OdinChess::Pawn, [4, 4]]].each do |input|
           it "returns false for #{input.inspect}" do
-            check = board_piece_logic.piece_at_cell(input[1], input[0])
+            check = board_piece_logic.piece_at_cell(input[0], input[1])
             expect(check).to be_falsy
           end
         end

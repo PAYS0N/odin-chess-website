@@ -68,25 +68,25 @@ module OdinChess
     end
 
     def setup_home_row(row, color)
-      @game_state[row].push(OdinChess::Piece.new(color, "rook"))
-      @game_state[row].push(OdinChess::Piece.new(color, "knight"))
-      @game_state[row].push(OdinChess::Piece.new(color, "bishop"))
-      @game_state[row].push(OdinChess::Piece.new(color, "queen"))
-      @game_state[row].push(OdinChess::Piece.new(color, "king"))
-      @game_state[row].push(OdinChess::Piece.new(color, "bishop"))
-      @game_state[row].push(OdinChess::Piece.new(color, "knight"))
-      @game_state[row].push(OdinChess::Piece.new(color, "rook"))
+      @game_state[row].push(OdinChess::Rook.new(color))
+      @game_state[row].push(OdinChess::Knight.new(color))
+      @game_state[row].push(OdinChess::Bishop.new(color))
+      @game_state[row].push(OdinChess::Queen.new(color))
+      @game_state[row].push(OdinChess::King.new(color))
+      @game_state[row].push(OdinChess::Bishop.new(color))
+      @game_state[row].push(OdinChess::Knight.new(color))
+      @game_state[row].push(OdinChess::Rook.new(color))
     end
 
     def setup_pawn_row(row, color)
       8.times do
-        @game_state[row].push(OdinChess::Piece.new(color, "pawn"))
+        @game_state[row].push(OdinChess::Pawn.new(color))
       end
     end
 
     def setup_empty_row(row)
       8.times do
-        @game_state[row].push(OdinChess::Piece.new("g", "empty"))
+        @game_state[row].push(OdinChess::EmptyPiece.new("g"))
       end
     end
 
@@ -121,19 +121,21 @@ module OdinChess
     end
 
     def parse_piece_capture(move)
-      [move[0], move[2].to_i - 1, move[1].ord - 97, move[5].to_i - 1, move[4].ord - 97, 1]
+      piece_class = Piece.grab_class_from_letter(move[0])
+      [piece_class, move[2].to_i - 1, move[1].ord - 97, move[5].to_i - 1, move[4].ord - 97, 1]
     end
 
     def parse_pawn_capture(move)
-      ["P", move[1].to_i - 1, move[0].ord - 97, move[4].to_i - 1, move[3].ord - 97, 1]
+      [OdinChess::Pawn, move[1].to_i - 1, move[0].ord - 97, move[4].to_i - 1, move[3].ord - 97, 1]
     end
 
     def parse_piece_move(move)
-      [move[0], move[2].to_i - 1, move[1].ord - 97, move[4].to_i - 1, move[3].ord - 97, 0]
+      piece_class = Piece.grab_class_from_letter(move[0])
+      [piece_class, move[2].to_i - 1, move[1].ord - 97, move[4].to_i - 1, move[3].ord - 97, 0]
     end
 
     def parse_pawn_move(move)
-      ["P", move[1].to_i - 1, move[0].ord - 97, move[3].to_i - 1, move[2].ord - 97, 0]
+      [OdinChess::Pawn, move[1].to_i - 1, move[0].ord - 97, move[3].to_i - 1, move[2].ord - 97, 0]
     end
 
     def valid?(move)
@@ -148,14 +150,14 @@ module OdinChess
     end
 
     def check_logically_valid(move)
-      piece_can_move(move) &&
-        piece_at_cell(move[0], [move[1], move[2]]) &&
+      piece_at_cell(move[0], [move[1], move[2]]) &&
         target_cell_ok([move[3], move[4]], move[5]) &&
+        piece_can_move(move) &&
         move_doesnt_lose(move)
     end
 
     def piece_at_cell(piece, cell)
-      passes = piece == @game_state[cell[0]][cell[1]].piece_to_s.strip
+      passes = @game_state[cell[0]][cell[1]].is_a?(piece)
       if passes == false
         puts "The piece you indicated #{piece} is not at that starting cell [#{cell[0]}, #{cell[1]}]. #{@game_state[cell[0]][cell[1]].piece_to_s.strip} is."
       end
@@ -163,15 +165,19 @@ module OdinChess
     end
 
     def target_cell_ok(cell, move_type)
-      return @game_state[cell[0]][cell[1]].type == "empty" if move_type.zero?
+      return @game_state[cell[0]][cell[1]].is_a?(EmptyPiece) if move_type.zero?
 
       target_color = @player1.active == true ? "b" : "w"
       @game_state[cell[0]][cell[1]].color == target_color
     end
 
     def piece_can_move(move)
-      puts "Unchecked if piece can move: #{move}"
-      true
+      cells = if move[5] == 1
+                @game_state[move[1]][move[2]].grab_available_captures(@game_state, move)
+              else
+                @game_state[move[1]][move[2]].grab_available_moves(@game_state, move)
+              end
+      cells.include?([move[3], move[4]])
     end
 
     def move_doesnt_lose(move)

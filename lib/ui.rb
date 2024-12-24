@@ -29,7 +29,7 @@ module OdinChess
     end
 
     def self.grab_move(game, player)
-      prompt = "What is #{player.name}'s move? (#{player.color}) You can also save and quit by entering \"SQ\""
+      prompt = "What is #{player.name}'s move? Your pieces are #{player.color}. You can also save and quit by entering \"SQ\""
       error_msg = "Please enter a valid move. Instead, to save and quit, enter \"SQ\""
       prep_proc = ->(input) { input.strip == "SQ" ? "SQ" : game.parse(input.strip) }
       test = ->(string) { string == "SQ" || game.valid?(string) }
