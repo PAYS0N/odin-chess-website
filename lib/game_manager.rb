@@ -41,7 +41,7 @@ module OdinChess
     end
 
     def take_turn
-      OdinChess::UI.display_board(@game_board.game_state)
+      OdinChess::UI.display_board(@game_board.game_state, (@player1.active == true ? "w" : "b"))
       move = OdinChess::UI.grab_move(@game_board, @game_board.grab_active_player)
       return save_quit if move == "SQ"
 
