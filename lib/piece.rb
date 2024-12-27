@@ -50,8 +50,7 @@ module OdinChess
       " P ".colorize(:light_black)
     end
 
-    def grab_available_captures(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_captures(state, current_cell)
       shift = @color == "w" ? 1 : -1
       target_cell_right = [current_cell[0] + shift, current_cell[1] + 1]
       target_cell_left = [current_cell[0] + shift, current_cell[1] - 1]
@@ -66,8 +65,7 @@ module OdinChess
       available_captures
     end
 
-    def grab_available_moves(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_moves(state, current_cell)
       available_moves = []
       target_cell_one = [current_cell[0] + (@color == "w" ? 1 : -1), current_cell[1]]
       target_cell_two = [current_cell[0] + (@color == "w" ? 2 : -2), current_cell[1]]
@@ -95,8 +93,7 @@ module OdinChess
       " R ".colorize(:light_black)
     end
 
-    def grab_available_captures(state, move)
-      cell = [move[1], move[2]]
+    def grab_available_captures(state, cell)
       target_color = @color == "w" ? "b" : "w"
       available_captures = []
       x = state.length - 1
@@ -108,8 +105,7 @@ module OdinChess
       available_captures
     end
 
-    def grab_available_moves(state, move)
-      cell = [move[1], move[2]]
+    def grab_available_moves(state, cell)
       available_moves = []
       x = state.length - 1
       y = state[0].length - 1
@@ -160,8 +156,7 @@ module OdinChess
       " N ".colorize(:light_black)
     end
 
-    def grab_available_captures(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_captures(state, current_cell)
       target_color = @color == "w" ? "b" : "w"
       list = []
       [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]].each do |shift|
@@ -171,8 +166,7 @@ module OdinChess
       list
     end
 
-    def grab_available_moves(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_moves(state, current_cell)
       list = []
       width = state.length - 1
       height = state[0].length - 1
@@ -194,8 +188,7 @@ module OdinChess
       " B ".colorize(:light_black)
     end
 
-    def grab_available_captures(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_captures(state, current_cell)
       target_color = @color == "w" ? "b" : "w"
       available_captures = []
       x = state.length - 1
@@ -211,8 +204,7 @@ module OdinChess
       available_captures
     end
 
-    def grab_available_moves(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_moves(state, current_cell)
       available_moves = []
       x = state.length - 1
       y = state[0].length - 1
@@ -267,8 +259,7 @@ module OdinChess
       " Q ".colorize(:light_black)
     end
 
-    def grab_available_captures(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_captures(state, current_cell)
       target_color = @color == "w" ? "b" : "w"
       available_captures = []
       x = state.length - 1
@@ -288,8 +279,7 @@ module OdinChess
       available_captures
     end
 
-    def grab_available_moves(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_moves(state, current_cell)
       available_moves = []
       x = state.length - 1
       y = state[0].length - 1
@@ -348,8 +338,7 @@ module OdinChess
       " K ".colorize(:light_black)
     end
 
-    def grab_available_captures(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_captures(state, current_cell)
       target_color = @color == "w" ? "b" : "w"
       available_captures = []
       [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]].each do |dir|
@@ -362,8 +351,7 @@ module OdinChess
       available_captures
     end
 
-    def grab_available_moves(state, move)
-      current_cell = [move[1], move[2]]
+    def grab_available_moves(state, current_cell)
       available_moves = []
       [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]].each do |dir|
         target_cell = [current_cell[0] + dir[0], current_cell[1] + dir[1]]

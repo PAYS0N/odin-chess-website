@@ -297,9 +297,9 @@ module OdinChess
 
     def piece_can_move(move)
       cells = if move[5] == 1
-                @game_state[move[1]][move[2]].grab_available_captures(@game_state, move)
+                @game_state[move[1]][move[2]].grab_available_captures(@game_state, [move[1], move[2]])
               else
-                @game_state[move[1]][move[2]].grab_available_moves(@game_state, move)
+                @game_state[move[1]][move[2]].grab_available_moves(@game_state, [move[1], move[2]])
               end
       passes = cells.include?([move[3], move[4]])
       puts "That piece can only go to #{cells.inspect}." unless passes
@@ -307,7 +307,7 @@ module OdinChess
     end
 
     def move_doesnt_lose(move)
-      update_check(move)
+      @in_check = update_check(move)
       turn_color = @player1.active == true ? :w : :b
       puts "Check." if !@in_check[turn_color] && @in_check[turn_color == :w ? :b : :w]
       !@in_check[turn_color]
@@ -326,7 +326,7 @@ module OdinChess
           elsif piece.is_a?(King)
             black_king = [i, j]
           end
-          piece.grab_available_captures(@game_state, [0, i, j]).each do |capture|
+          piece.grab_available_captures(@game_state, [i, j]).each do |capture|
             if piece.color == "w"
               possible_captures_white.append(capture)
             else
@@ -335,8 +335,8 @@ module OdinChess
           end
         end
       end
-      @in_check = { w: possible_captures_black.include?(white_king), b: possible_captures_white.include?(black_king) }
       unapply_move(move)
+      { w: possible_captures_black.include?(white_king), b: possible_captures_white.include?(black_king) }
     end
 
     def castle_valid?(type)
@@ -385,6 +385,42 @@ module OdinChess
 
     def grab_active_player
       @player1.active ? @player1 : @player2
+    end
+
+    def check_game_over
+      color = grab_active_player == @player1 ? "w" : "b"
+      @game_ended = true
+      @game_state.each_with_index do |row, i|
+        row.each_with_index do |piece, j|
+          next unless piece.color == color
+
+          @game_ended = false if check_all_moves(piece, color, i, j) || check_all_captures(piece, color, i, j)
+        end
+      end
+    end
+
+    def check_all_moves(piece, color, row, col)
+      move_cells = piece.grab_available_moves(@game_state, [row, col]).compact
+      move_cells.each do |cell|
+        move = [piece.class, row, col, cell[0], cell[1], 0]
+        unless update_check(move)[color.to_sym]
+          puts "Allowed move: #{move}"
+          return true
+        end
+      end
+      false
+    end
+
+    def check_all_captures(piece, color, row, col)
+      capt_cells = piece.grab_available_captures(@game_state, [row, col]).compact
+      capt_cells.each do |cell|
+        move = [piece.class, row, col, cell[0], cell[1], 1]
+        unless update_check(move)[color.to_sym]
+          puts "Allowed capture: #{move}"
+          return true
+        end
+      end
+      false
     end
   end
 end

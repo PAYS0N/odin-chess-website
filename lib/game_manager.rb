@@ -47,13 +47,15 @@ module OdinChess
       @game_board.apply_move(move)
       @player1.swap_active
       @player2.swap_active
+      @game_board.check_game_over
       return game_over if @game_board.game_ended
 
       take_turn
     end
 
     def game_over
-      puts "game_over"
+      puts "Checkmate!"
+      OdinChess::UI.display_board(@game_board.game_state, (@player1.active == true ? "w" : "b"))
     end
 
     def save_quit
