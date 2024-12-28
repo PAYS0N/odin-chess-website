@@ -61,7 +61,7 @@ module OdinChess
                                            cell[1].between?(0, 7) &&
                                            state[cell[0]][cell[1]].color == target_color
       end
-      puts "en passent not in"
+      puts "en passant not in"
       available_captures
     end
 

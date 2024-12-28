@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("piece")
+require_relative("move")
 
 require "json"
 
@@ -92,20 +93,29 @@ module OdinChess
     end
 
     def apply_move(move)
-      return castle(move) if move.length == 1
+      return castle(move) if ["Castle", "Long castle"].include?(move.type)
 
-      @original_piece = @game_state[move[1]][move[2]]
-      @original_target = @game_state[move[3]][move[4]]
-      @game_state[move[3]][move[4]] = move[0].new(@original_piece.color)
-      @game_state[move[3]][move[4]].has_moved = true
-      @game_state[move[1]][move[2]] = OdinChess::EmptyPiece.new("g")
+      save_pieces(move)
+      update_pieces(move)
+    end
+
+    def save_pieces(move)
+      @original_piece = @game_state[move.row][move.col]
+      @original_target = @game_state[move.target_row][move.target_col]
+    end
+
+    def update_pieces(move)
+      current_color = @player1.active == true ? "w" : "b"
+      @game_state[move.target_row][move.target_col] = move.p_class.new(current_color)
+      @game_state[move.target_row][move.target_col].has_moved = true
+      @game_state[move.row][move.col] = OdinChess::EmptyPiece.new("g")
     end
 
     def unapply_move(move)
-      return uncastle(move) if move.length == 1
+      return uncastle(move) if ["Castle", "Long castle"].include?(move.type)
 
-      @game_state[move[1]][move[2]] = @original_piece
-      @game_state[move[3]][move[4]] = @original_target
+      @game_state[move.row][move.col] = @original_piece
+      @game_state[move.target_row][move.target_col] = @original_target
     end
 
     def castle(move)
@@ -113,11 +123,11 @@ module OdinChess
     end
 
     def white_castle(move)
-      move == ["Castle"] ? white_short_castle : white_long_castle
+      move.type == "Castle" ? white_short_castle : white_long_castle
     end
 
     def black_castle(move)
-      move == ["Castle"] ? black_short_castle : black_long_castle
+      move.type == "Castle" ? black_short_castle : black_long_castle
     end
 
     def uncastle(move)
@@ -125,11 +135,11 @@ module OdinChess
     end
 
     def unwhite_castle(move)
-      move == ["Castle"] ? unwhite_short_castle : unwhite_long_castle
+      move.type == "Castle" ? unwhite_short_castle : unwhite_long_castle
     end
 
     def unblack_castle(move)
-      move == ["Castle"] ? unblack_short_castle : unblack_long_castle
+      move.type == "Castle" ? unblack_short_castle : unblack_long_castle
     end
 
     def white_short_castle
@@ -200,77 +210,33 @@ module OdinChess
       @game_state[7][0] = Rook.new("b")
     end
 
-    def parse(move)
-      move = move.chars
-      return parse_castle(move) if move.include?("0")
-
-      if move.include?("x")
-        return parse_piece_capture(move) if move.any? { |char| char.match?(/[A-Z]/) }
-
-        parse_pawn_capture(move)
-      else
-        return parse_piece_move(move) if move.any? { |char| char.match?(/[A-Z]/) }
-
-        parse_pawn_move(move)
-      end
-    rescue NoMethodError => e
-      raise unless e.message.include?("undefined method `ord'")
-
-      ["Invalid"]
-    end
-
-    def parse_castle(move)
-      return ["Castle"] if move == %w[0 - 0]
-      return ["Long castle"] if move == %w[0 - 0 - 0]
-
-      ["Invalid"]
-    end
-
-    def parse_piece_capture(move)
-      piece_class = Piece.grab_class_from_letter(move[0])
-      [piece_class, move[2].to_i - 1, move[1].ord - 97, move[5].to_i - 1, move[4].ord - 97, 1]
-    end
-
-    def parse_pawn_capture(move)
-      [OdinChess::Pawn, move[1].to_i - 1, move[0].ord - 97, move[4].to_i - 1, move[3].ord - 97, 1]
-    end
-
-    def parse_piece_move(move)
-      piece_class = Piece.grab_class_from_letter(move[0])
-      [piece_class, move[2].to_i - 1, move[1].ord - 97, move[4].to_i - 1, move[3].ord - 97, 0]
-    end
-
-    def parse_pawn_move(move)
-      [OdinChess::Pawn, move[1].to_i - 1, move[0].ord - 97, move[3].to_i - 1, move[2].ord - 97, 0]
-    end
-
     def valid?(move)
       check_technically_valid(move) && check_logically_valid(move)
     end
 
     def check_technically_valid(move)
-      return true if ["Castle", "Long castle"].include?(move)
-      return false if move == ["Invalid"]
+      return true if ["Castle", "Long castle"].include?(move.type)
+      return false if move.type == "Invalid"
 
-      move[1..].all? { |int| int.between?(0, 7) }
+      move.technically_valid?
     end
 
     def check_logically_valid(move)
-      if move.length == 1
-        castle_valid?(move)
+      if ["Castle", "Long castle"].include?(move.type)
+        castle_valid?(move.type)
       else
-        piece_at_cell(move[0], [move[1], move[2]]) &&
-          piece_correct_color([move[1], move[2]]) &&
-          target_cell_ok([move[3], move[4]], move[5]) &&
+        piece_at_cell(move.p_class, [move.row, move.col]) &&
+          piece_correct_color([move.row, move.col]) &&
+          target_cell_ok([move.target_row, move.target_col], move.is_capture) &&
           piece_can_move(move) &&
           move_doesnt_lose(move)
       end
     end
 
-    def piece_at_cell(piece, cell)
-      passes = @game_state[cell[0]][cell[1]].is_a?(piece)
+    def piece_at_cell(piece_class, cell)
+      passes = @game_state[cell[0]][cell[1]].is_a?(piece_class)
       unless passes
-        puts "The piece you indicated #{piece} is not at that starting cell [#{cell[0]}, #{cell[1]}]. #{@game_state[cell[0]][cell[1]].piece_to_s.strip} is."
+        puts "The piece you indicated #{piece_class} is not at that starting cell [#{cell[0]}, #{cell[1]}]. #{@game_state[cell[0]][cell[1]].piece_to_s.strip} is."
       end
       passes
     end
@@ -281,8 +247,8 @@ module OdinChess
       passes
     end
 
-    def target_cell_ok(cell, move_type)
-      if move_type.zero?
+    def target_cell_ok(cell, move_is_capture)
+      unless move_is_capture
         passes = @game_state[cell[0]][cell[1]].is_a?(EmptyPiece)
         puts "That cell is occupied by #{@game_state[cell[0]][cell[1]]}." unless passes
 
@@ -296,12 +262,12 @@ module OdinChess
     end
 
     def piece_can_move(move)
-      cells = if move[5] == 1
-                @game_state[move[1]][move[2]].grab_available_captures(@game_state, [move[1], move[2]])
+      cells = if move.is_capture
+                @game_state[move.row][move.col].grab_available_captures(@game_state, [move.row, move.col])
               else
-                @game_state[move[1]][move[2]].grab_available_moves(@game_state, [move[1], move[2]])
+                @game_state[move.row][move.col].grab_available_moves(@game_state, [move.row, move.col])
               end
-      passes = cells.include?([move[3], move[4]])
+      passes = cells.include?([move.target_row, move.target_col])
       puts "That piece can only go to #{cells.inspect}." unless passes
       passes
     end
@@ -340,7 +306,7 @@ module OdinChess
     end
 
     def castle_valid?(type)
-      if type == ["Castle"]
+      if type == "Castle"
         if @player1.active == true
           white_short_castle_valid?
         else
@@ -402,7 +368,7 @@ module OdinChess
     def check_all_moves(piece, color, row, col)
       move_cells = piece.grab_available_moves(@game_state, [row, col]).compact
       move_cells.each do |cell|
-        move = [piece.class, row, col, cell[0], cell[1], 0]
+        move = OdinChess::Move.new("Normal", piece.class, [row, col], cell, false)
         unless update_check(move)[color.to_sym]
           puts "Allowed move: #{move}"
           return true
@@ -414,7 +380,7 @@ module OdinChess
     def check_all_captures(piece, color, row, col)
       capt_cells = piece.grab_available_captures(@game_state, [row, col]).compact
       capt_cells.each do |cell|
-        move = [piece.class, row, col, cell[0], cell[1], 1]
+        move = OdinChess::Move.new("Normal", piece.class, [row, col], cell, true)
         unless update_check(move)[color.to_sym]
           puts "Allowed capture: #{move}"
           return true

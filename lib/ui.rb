@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative("move")
+
 # module to store chess game
 module OdinChess
   # class that stores logic for interacting with user
@@ -31,8 +33,8 @@ module OdinChess
     def self.grab_move(game, player)
       prompt = "What is #{player.name}'s move? Your pieces are #{player.color}. You can also save and quit by entering \"SQ\""
       error_msg = "Please enter a valid move. Instead, to save and quit, enter \"SQ\""
-      prep_proc = ->(input) { input.strip == "SQ" ? "SQ" : game.parse(input.strip) }
-      test = ->(string) { string == "SQ" || game.valid?(string) }
+      prep_proc = ->(input) { input.strip == "SQ" ? "SQ" : OdinChess::Move.from_string(input.strip) }
+      test = ->(move) { move == "SQ" || game.valid?(move) }
       OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
     end
 
