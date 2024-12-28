@@ -54,7 +54,7 @@ module OdinChess
 
     def game_over
       puts "Checkmate!"
-      OdinChess::UI.display_board(@game_board.game_state, (@player1.active == true ? "w" : "b"))
+      OdinChess::UI.display_board(@game_board.game_state, @game_board.active_color)
     end
 
     def save_quit
