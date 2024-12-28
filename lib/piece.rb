@@ -24,15 +24,6 @@ module OdinChess
       sym_to_class[letter.to_sym]
     end
 
-    def to_obj
-      puts "piece to obj not implemented"
-      {}
-    end
-
-    def self.from_obj(obj)
-      puts "piece from #{obj} not implemented"
-    end
-
     def piece_to_s
       return white_piece_char if @color == "w"
 

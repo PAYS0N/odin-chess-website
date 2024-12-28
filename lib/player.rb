@@ -5,24 +5,11 @@ require "json"
 module OdinChess
   # class that stores player name
   class Player
-    attr_accessor :name, :active, :color
+    attr_accessor :name, :color
 
-    def initialize(name = nil, active = false, color = nil)
+    def initialize(name = nil, color = nil)
       @name = name
-      @active = active
-      @color = color
-    end
-
-    def to_obj
-      { name: @name, active: @active, color: @color }
-    end
-
-    def self.from_obj(obj)
-      new(obj["name"], obj["active"], obj["color"])
-    end
-
-    def swap_active
-      @active = !@active
+      @name = color
     end
   end
 end

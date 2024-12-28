@@ -22,8 +22,8 @@ module OdinChess
     def create_game
       @player1 = OdinChess::Player.new
       @player2 = OdinChess::Player.new
-      player_setup
-      @game_board = OdinChess::GameBoard.new(@player1, @player2)
+      player1_is_first = player_setup
+      @game_board = OdinChess::GameBoard.new(@player1, @player2, player1_is_first)
     end
 
     def load_game
@@ -34,19 +34,18 @@ module OdinChess
       @player1.name = OdinChess::UI.grab_name
       @player2.name = OdinChess::UI.grab_name
       first_player_name = OdinChess::UI.grab_first(@player1.name, @player2.name)
-      (first_player_name == @player1.name ? @player1 : @player2).active = true
-      (first_player_name == @player1.name ? @player1 : @player2).color = "w"
-      (first_player_name == @player1.name ? @player2 : @player1).color = "b"
+      player1_is_white = first_player_name == @player1.name
+      @player1.color = (player1_is_white ? "w" : "b")
+      @player2.color = (player1_is_white ? "b" : "w")
     end
 
     def take_turn
-      OdinChess::UI.display_board(@game_board.game_state, (@player1.active == true ? "w" : "b"))
-      move = OdinChess::UI.grab_move(@game_board, @game_board.grab_active_player)
+      OdinChess::UI.display_board(@game_board.game_state, @game_board.active_color)
+      move = OdinChess::UI.grab_move(@game_board, @game_board.active_player)
       return save_quit if move == "SQ"
 
       @game_board.apply_move(move)
-      @player1.swap_active
-      @player2.swap_active
+      @game_board.swap_actives
       @game_board.check_game_over
       return game_over if @game_board.game_ended
 

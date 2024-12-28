@@ -9,11 +9,13 @@ require "json"
 module OdinChess
   # class to store game state and logic
   class GameBoard
-    attr_reader :game_ended, :game_state
+    attr_reader :game_ended, :game_state, :active_color, :active_player
 
-    def initialize(player1, player2, game_state = [])
+    def initialize(player1, player2, player_1_is_active, game_state = [])
       @player1 = player1
       @player2 = player2
+      @active_player = player_1_is_active ? @player1 : @player2
+      @active_color = @active_player == @player1 ? "w" : "b"
       @game_ended = false
       @game_state = game_state
       @in_check = { w: false, b: false }
@@ -23,39 +25,6 @@ module OdinChess
         @game_state.push([])
       end
       setup_game_state
-    end
-
-    def to_json(*_args)
-      { player1: @player1.to_obj, player2: @player2.to_obj, game_state: board_to_obj(@game_state) }.to_json
-    end
-
-    def board_to_obj(state)
-      json_state = []
-      state.each_with_index do |row, i|
-        json_state.push([])
-        row.each do |piece|
-          json_state[i].push(piece.to_obj)
-        end
-      end
-      json_state
-    end
-
-    def self.from_json(json_str)
-      data = JSON.parse(json_str)
-      player1 = OdinChess::Player.from_obj(data["player1"])
-      player2 = OdinChess::Player.from_obj(data["player2"])
-      new(player1, player2, board_from_obj(data["game_state"]))
-    end
-
-    def board_from_obj(obj)
-      state = []
-      8.times do |i|
-        state.push([])
-        8.times do |j|
-          state[i].push(OdinChess::Piece.from_obj(obj[i][j]))
-        end
-      end
-      state
     end
 
     def setup_game_state
@@ -92,6 +61,11 @@ module OdinChess
       end
     end
 
+    def swap_actives
+      @active_color = (@active_color == "b" ? "w" : "b")
+      @active_player = (@active_player == @player1 ? @player2 : @player1)
+    end
+
     def apply_move(move)
       return castle(move) if ["Castle", "Long castle"].include?(move.type)
 
@@ -105,8 +79,7 @@ module OdinChess
     end
 
     def update_pieces(move)
-      current_color = @player1.active == true ? "w" : "b"
-      @game_state[move.target_row][move.target_col] = move.p_class.new(current_color)
+      @game_state[move.target_row][move.target_col] = move.p_class.new(@active_color)
       @game_state[move.target_row][move.target_col].has_moved = true
       @game_state[move.row][move.col] = OdinChess::EmptyPiece.new("g")
     end
@@ -119,7 +92,7 @@ module OdinChess
     end
 
     def castle(move)
-      @player1.active == true ? white_castle(move) : black_castle(move)
+      @active_color == "w" ? white_castle(move) : black_castle(move)
     end
 
     def white_castle(move)
@@ -131,7 +104,7 @@ module OdinChess
     end
 
     def uncastle(move)
-      @player1.active == true ? unwhite_castle(move) : unblack_castle(move)
+      @active_color == "w" ? unwhite_castle(move) : unblack_castle(move)
     end
 
     def unwhite_castle(move)
@@ -242,7 +215,7 @@ module OdinChess
     end
 
     def piece_correct_color(cell)
-      passes = @game_state[cell[0]][cell[1]].color == (@player1.active == true ? "w" : "b")
+      passes = @game_state[cell[0]][cell[1]].color == @active_color
       puts "The piece you indicated is not yours." unless passes
       passes
     end
@@ -255,7 +228,7 @@ module OdinChess
         return passes
       end
 
-      target_color = @player1.active == true ? "b" : "w"
+      target_color = @active_color == "w" ? "b" : "w"
       passes = @game_state[cell[0]][cell[1]].color == target_color
       puts "You can only take #{target_color} pieces." unless passes
       passes
@@ -274,9 +247,9 @@ module OdinChess
 
     def move_doesnt_lose(move)
       @in_check = update_check(move)
-      turn_color = @player1.active == true ? :w : :b
-      puts "Check." if !@in_check[turn_color] && @in_check[turn_color == :w ? :b : :w]
-      !@in_check[turn_color]
+      turn_color_sym = @active_color.to_sym
+      puts "Check." if !@in_check[turn_color_sym] && @in_check[turn_color_sym == :w ? :b : :w]
+      !@in_check[turn_color_sym]
     end
 
     def update_check(move)
@@ -307,12 +280,12 @@ module OdinChess
 
     def castle_valid?(type)
       if type == "Castle"
-        if @player1.active == true
+        if @active_color == "w"
           white_short_castle_valid?
         else
           black_short_castle_valid?
         end
-      elsif @player1.active == true
+      elsif @active_color == "w"
         white_long_castle_valid?
       else
         black_long_castle_valid?
@@ -349,18 +322,15 @@ module OdinChess
         @game_state[7][4].is_a?(King) && !@game_state[7][4].has_moved
     end
 
-    def grab_active_player
-      @player1.active ? @player1 : @player2
-    end
-
     def check_game_over
-      color = grab_active_player == @player1 ? "w" : "b"
       @game_ended = true
       @game_state.each_with_index do |row, i|
         row.each_with_index do |piece, j|
-          next unless piece.color == color
+          next unless piece.color == @active_color
 
-          @game_ended = false if check_all_moves(piece, color, i, j) || check_all_captures(piece, color, i, j)
+          if check_all_moves(piece, @active_color, i, j) || check_all_captures(piece, @active_color, i, j)
+            @game_ended = false
+          end
         end
       end
     end
@@ -369,10 +339,7 @@ module OdinChess
       move_cells = piece.grab_available_moves(@game_state, [row, col]).compact
       move_cells.each do |cell|
         move = OdinChess::Move.new("Normal", piece.class, [row, col], cell, false)
-        unless update_check(move)[color.to_sym]
-          puts "Allowed move: #{move}"
-          return true
-        end
+        return true unless update_check(move)[color.to_sym]
       end
       false
     end
@@ -381,10 +348,7 @@ module OdinChess
       capt_cells = piece.grab_available_captures(@game_state, [row, col]).compact
       capt_cells.each do |cell|
         move = OdinChess::Move.new("Normal", piece.class, [row, col], cell, true)
-        unless update_check(move)[color.to_sym]
-          puts "Allowed capture: #{move}"
-          return true
-        end
+        return true unless update_check(move)[color.to_sym]
       end
       false
     end
