@@ -68,119 +68,86 @@ module OdinChess
 
     def apply_move(move)
       return castle(move) if ["Castle", "Long castle"].include?(move.type)
+      return en_passant(move) if move.type == "En passant"
 
+      @was_en_passant = false
       save_pieces(move)
       update_pieces(move)
     end
 
+    def en_passant(move)
+      @was_en_passant = true
+      @game_state[move.target_row][move.target_col] = Pawn.new(@active_color)
+      @game_state[move.target_row][move.target_col].has_moved = true
+      @game_state[move.row][move.col] = OdinChess::EmptyPiece.new("g")
+      @game_state[move.row][move.target_col] = OdinChess::EmptyPiece.new("g")
+    end
+
+    def un_en_passant(move)
+      @game_state[move.target_row][move.target_col] = OdinChess::EmptyPiece.new("g")
+      @game_state[move.row][move.col] = Pawn.new(@active_color)
+      @game_state[move.row][move.col].has_moved = true
+      @game_state[move.row][move.target_col] = Pawn.new(@active_color == "w" ? "b" : "w")
+      @game_state[move.row][move.target_col].has_moved = true
+      @game_state[move.row][move.target_col].just_two_moved = true
+    end
+
     def save_pieces(move)
       @original_piece = @game_state[move.row][move.col]
+      @was_first_move = !@original_piece.has_moved
+      @was_single_move = @original_piece.is_a?(Pawn) && !@original_piece.just_two_moved
       @original_target = @game_state[move.target_row][move.target_col]
     end
 
     def update_pieces(move)
       @game_state[move.target_row][move.target_col] = move.p_class.new(@active_color)
       @game_state[move.target_row][move.target_col].has_moved = true
+      if move.p_class == Pawn && (move.row - move.target_row).abs == 2
+        @game_state[move.target_row][move.target_col].just_two_moved = true
+      end
       @game_state[move.row][move.col] = OdinChess::EmptyPiece.new("g")
     end
 
     def unapply_move(move)
-      return uncastle(move) if ["Castle", "Long castle"].include?(move.type)
+      return un_en_passant(move) if @was_en_passant
 
+      restore_piece_locations(move)
+      un_update_pieces
+    end
+
+    def restore_piece_locations(move)
       @game_state[move.row][move.col] = @original_piece
       @game_state[move.target_row][move.target_col] = @original_target
     end
 
+    def un_update_pieces
+      @original_piece.has_moved = false if @was_first_move
+      @original_piece.just_two_moved = false if @was_single_move
+    end
+
     def castle(move)
-      @active_color == "w" ? white_castle(move) : black_castle(move)
+      move.type == "Castle" ? short_castle : long_castle
     end
 
-    def white_castle(move)
-      move.type == "Castle" ? white_short_castle : white_long_castle
+    def short_castle
+      row = @active_color == "w" ? 0 : 7
+      @game_state[row][4] = EmptyPiece.new("g")
+      @game_state[row][5] = Rook.new(@active_color)
+      @game_state[row][5].has_moved = true
+      @game_state[row][6] = King.new(@active_color)
+      @game_state[row][6].has_moved = true
+      @game_state[row][7] = EmptyPiece.new("g")
     end
 
-    def black_castle(move)
-      move.type == "Castle" ? black_short_castle : black_long_castle
-    end
-
-    def uncastle(move)
-      @active_color == "w" ? unwhite_castle(move) : unblack_castle(move)
-    end
-
-    def unwhite_castle(move)
-      move.type == "Castle" ? unwhite_short_castle : unwhite_long_castle
-    end
-
-    def unblack_castle(move)
-      move.type == "Castle" ? unblack_short_castle : unblack_long_castle
-    end
-
-    def white_short_castle
-      @game_state[0][4] = EmptyPiece.new("g")
-      @game_state[0][5] = Rook.new("w")
-      @game_state[0][5].has_moved = true
-      @game_state[0][6] = King.new("w")
-      @game_state[0][6].has_moved = true
-      @game_state[0][7] = EmptyPiece.new("g")
-    end
-
-    def white_long_castle
-      @game_state[0][4] = EmptyPiece.new("g")
-      @game_state[0][3] = Rook.new("w")
-      @game_state[0][3].has_moved = true
-      @game_state[0][2] = King.new("w")
-      @game_state[0][2].has_moved = true
-      @game_state[0][1] = EmptyPiece.new("g")
-      @game_state[0][0] = EmptyPiece.new("g")
-    end
-
-    def black_short_castle
-      @game_state[7][4] = EmptyPiece.new("g")
-      @game_state[7][5] = Rook.new("b")
-      @game_state[7][5].has_moved = true
-      @game_state[7][6] = King.new("b")
-      @game_state[7][6].has_moved = true
-      @game_state[7][7] = EmptyPiece.new("g")
-    end
-
-    def black_long_castle
-      @game_state[7][4] = EmptyPiece.new("g")
-      @game_state[7][3] = Rook.new("b")
-      @game_state[7][3].has_moved = true
-      @game_state[7][2] = King.new("b")
-      @game_state[7][2].has_moved = true
-      @game_state[7][1] = EmptyPiece.new("g")
-      @game_state[7][0] = EmptyPiece.new("g")
-    end
-
-    def unwhite_short_castle
-      @game_state[0][4] = King.new("w")
-      @game_state[0][5] = EmptyPiece.new("g")
-      @game_state[0][6] = EmptyPiece.new("g")
-      @game_state[0][7] = Rook.new("w")
-    end
-
-    def unwhite_long_castle
-      @game_state[0][4] = King.new("w")
-      @game_state[0][3] = EmptyPiece.new("g")
-      @game_state[0][2] = EmptyPiece.new("g")
-      @game_state[0][1] = EmptyPiece.new("g")
-      @game_state[0][0] = Rook.new("w")
-    end
-
-    def unblack_short_castle
-      @game_state[7][4] = King.new("b")
-      @game_state[7][5] = EmptyPiece.new("g")
-      @game_state[7][6] = EmptyPiece.new("g")
-      @game_state[7][7] = Rook.new("b")
-    end
-
-    def unblack_long_castle
-      @game_state[7][4] = King.new("b")
-      @game_state[7][3] = EmptyPiece.new("g")
-      @game_state[7][2] = EmptyPiece.new("g")
-      @game_state[7][1] = EmptyPiece.new("g")
-      @game_state[7][0] = Rook.new("b")
+    def long_castle
+      row = @active_color == "w" ? 0 : 7
+      @game_state[row][4] = EmptyPiece.new("g")
+      @game_state[row][3] = Rook.new(@active_color)
+      @game_state[row][3].has_moved = true
+      @game_state[row][2] = King.new(@active_color)
+      @game_state[row][2].has_moved = true
+      @game_state[row][1] = EmptyPiece.new("g")
+      @game_state[row][0] = EmptyPiece.new("g")
     end
 
     def valid?(move)
@@ -198,12 +165,47 @@ module OdinChess
       if ["Castle", "Long castle"].include?(move.type)
         castle_valid?(move.type)
       else
-        piece_at_cell(move.p_class, [move.row, move.col]) &&
-          piece_correct_color([move.row, move.col]) &&
-          target_cell_ok([move.target_row, move.target_col], move.is_capture) &&
-          piece_can_move(move) &&
-          move_doesnt_lose(move)
+        if move.p_class == Pawn && en_passant_valid?(move)
+          move.type = "En passant"
+          return true
+        end
+        normal_valid?(move)
       end
+    end
+
+    def en_passant_valid?(move)
+      piece_at_cell(Pawn, [move.row, move.col]) &&
+        piece_correct_color([move.row, move.col]) &&
+        target_cell_empty([move.target_row, move.target_col]) &&
+        next_to_applicable_pawn(move) &&
+        move_doesnt_lose(move)
+    end
+
+    def next_to_applicable_pawn(move)
+      unless (move.target_col - move.col).abs == 1
+        puts "cant take more than one col away"
+        return false
+      end
+      unless (move.target_row - move.row) == (@active_color == "w" ? 1 : -1)
+        puts "wrong direction"
+        return false
+      end
+
+      target = @game_state[move.row][move.target_col]
+      puts "target not pawn or target didnt two move" unless target.is_a?(Pawn) && target.just_two_moved
+      target.is_a?(Pawn) && target.just_two_moved
+    end
+
+    def target_cell_empty(cell)
+      @game_state[cell[0]][cell[1]].is_a?(EmptyPiece)
+    end
+
+    def normal_valid?(move)
+      piece_at_cell(move.p_class, [move.row, move.col]) &&
+        piece_correct_color([move.row, move.col]) &&
+        target_cell_ok([move.target_row, move.target_col], move.is_capture) &&
+        piece_can_move(move) &&
+        move_doesnt_lose(move)
     end
 
     def piece_at_cell(piece_class, cell)

@@ -33,6 +33,8 @@ module OdinChess
 
   # class for the pawn piece
   class Pawn < Piece
+    attr_accessor :just_two_moved
+
     def white_piece_char
       " P "
     end
@@ -52,7 +54,6 @@ module OdinChess
                                            cell[1].between?(0, 7) &&
                                            state[cell[0]][cell[1]].color == target_color
       end
-      puts "en passant not in"
       available_captures
     end
 
