@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require_relative("piece")
+
 module OdinChess
   # class that stores player name
   class Move
-    attr_accessor :type, :piece, :p_class, :row, :col, :target_row, :target_col, :is_capture
+    attr_accessor :type, :p_class, :row, :col, :target_row, :target_col, :is_capture
 
     def initialize(type, piece_class = nil, piece_cell = nil, target_cell = nil, is_capture = nil)
       @type = type
@@ -65,9 +67,11 @@ module OdinChess
 
     def self.from_string(move)
       move = move.chars
-      return OdinChess::Move.parse_castle(move) if move.include?("0")
 
-      if move.include?("x")
+      case
+      when move.include?("0") then OdinChess::Move.parse_castle(move)
+      when move.include?("=") then OdinChess::Move.parse_promote(move)
+      when move.include?("x")
         return OdinChess::Move.from_piece_capture(move) if move.any? { |char| char.match?(/[A-Z]/) }
 
         OdinChess::Move.from_pawn_capture(move)
@@ -90,7 +94,8 @@ module OdinChess
     end
 
     def technically_valid?
-      [@row, @col, @target_col, @target_row].all? { |int| int.between?(0, 7) }
+      @row && @col && @target_row && @target_col &&
+        [@row, @col, @target_col, @target_row].all? { |int| int.between?(0, 7) }
     end
   end
 end

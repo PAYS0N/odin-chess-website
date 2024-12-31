@@ -67,7 +67,7 @@ module OdinChess
     end
 
     def apply_move(move)
-      return castle(move) if ["Castle", "Long castle"].include?(move.type)
+      return castle(move) if ["Castle", "Long Castle"].include?(move.type)
       return en_passant(move) if move.type == "En passant"
 
       @was_en_passant = false
@@ -155,14 +155,14 @@ module OdinChess
     end
 
     def check_technically_valid(move)
-      return true if ["Castle", "Long castle"].include?(move.type)
+      return true if ["Castle", "Long Castle"].include?(move.type)
       return false if move.type == "Invalid"
 
       move.technically_valid?
     end
 
     def check_logically_valid(move)
-      if ["Castle", "Long castle"].include?(move.type)
+      if ["Castle", "Long Castle"].include?(move.type)
         castle_valid?(move.type)
       else
         if move.p_class == Pawn && en_passant_valid?(move)
@@ -182,17 +182,10 @@ module OdinChess
     end
 
     def next_to_applicable_pawn(move)
-      unless (move.target_col - move.col).abs == 1
-        puts "cant take more than one col away"
-        return false
-      end
-      unless (move.target_row - move.row) == (@active_color == "w" ? 1 : -1)
-        puts "wrong direction"
-        return false
-      end
+      return false unless (move.target_col - move.col).abs == 1
+      return false unless (move.target_row - move.row) == (@active_color == "w" ? 1 : -1)
 
       target = @game_state[move.row][move.target_col]
-      puts "target not pawn or target didnt two move" unless target.is_a?(Pawn) && target.just_two_moved
       target.is_a?(Pawn) && target.just_two_moved
     end
 
