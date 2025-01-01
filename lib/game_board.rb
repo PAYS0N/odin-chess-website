@@ -13,10 +13,10 @@ module OdinChess
     attr_reader :game_ended, :game_state, :active_color, :active_player
 
     def initialize(player1, player2, player_1_is_active, game_state = [])
-      @player1 = player1
-      @player2 = player2
-      @active_player = player_1_is_active ? @player1 : @player2
-      @active_color = @active_player == @player1 ? "w" : "b"
+      @player1 = (player_1_is_active ? player1 : player2)
+      @player2 = (player_1_is_active ? player2 : player1)
+      @active_player = @player1
+      @active_color = "w"
       @game_ended = false
       @game_state = game_state
       @in_check = { w: false, b: false }

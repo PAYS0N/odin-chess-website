@@ -31,9 +31,9 @@ module OdinChess
       @player1.name = OdinChess::UI.grab_name
       @player2.name = OdinChess::UI.grab_name
       first_player_name = OdinChess::UI.grab_first(@player1.name, @player2.name)
-      player1_is_white = first_player_name == @player1.name
-      @player1.color = (player1_is_white ? "w" : "b")
-      @player2.color = (player1_is_white ? "b" : "w")
+      @player1.color = (first_player_name == @player1.name ? "w" : "b")
+      @player2.color = (first_player_name == @player1.name ? "b" : "w")
+      first_player_name == @player1.name
     end
 
     def take_turn
