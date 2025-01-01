@@ -29,11 +29,27 @@ module OdinChess
 
       black_piece_char
     end
+
+    def to_obj
+      { class: self.class, color: @color, has_moved: @has_moved }
+    end
+
+    def self.from_obj(obj)
+      puts "obj: #{obj}."
+      puts "color: #{obj[:color]}."
+      puts "moved: #{obj[:has_moved]}."
+      new(obj[:color], obj[:has_moved])
+    end
   end
 
   # class for the pawn piece
   class Pawn < Piece
     attr_accessor :just_two_moved
+
+    def initialize(color, has_moved = false, just_two_moved = false)
+      super(color, has_moved)
+      @just_two_moved = just_two_moved
+    end
 
     def white_piece_char
       " P "
@@ -72,6 +88,14 @@ module OdinChess
         available_moves.push(target_cell_two)
       end
       available_moves
+    end
+
+    def to_obj
+      { class: self.class, color: @color, has_moved: @has_moved, just_two_moved: @just_two_moved }
+    end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"], obj["just_two_moved"])
     end
   end
 
@@ -136,6 +160,10 @@ module OdinChess
       end
       available_moves
     end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"])
+    end
   end
 
   # class for the knight piece
@@ -167,6 +195,10 @@ module OdinChess
         list.push(new) if new[0].between?(0, width) && new[1].between?(0, height) && state[new[0]][new[1]].color == "g"
       end
       list
+    end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"])
     end
   end
 
@@ -238,6 +270,10 @@ module OdinChess
         available_moves.push(next_cell)
       end
       available_moves
+    end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"])
     end
   end
 
@@ -318,6 +354,10 @@ module OdinChess
       end
       available_moves
     end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"])
+    end
   end
 
   # class for the king piece
@@ -354,6 +394,10 @@ module OdinChess
       end
       available_moves
     end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"])
+    end
   end
 
   # class to signify no piece on the board
@@ -368,6 +412,10 @@ module OdinChess
 
     def grab_available_captures(_state, _move)
       []
+    end
+
+    def self.from_obj(obj)
+      new(obj["color"], obj["has_moved"])
     end
   end
 end

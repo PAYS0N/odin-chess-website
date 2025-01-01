@@ -35,6 +35,7 @@ PLATFORMS
 
 DEPENDENCIES
   colorize (~> 1.1)
+  json (~> 2.9)
   rubocop (~> 1.69)
 
 BUNDLED WITH

@@ -46,6 +46,14 @@ module OdinChess
       OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
     end
 
+    def self.grab_save_selection(number_of_saves)
+      prompt = "What save do you want to play? You can also enter -1 to go back."
+      error_msg = "Please enter a save number."
+      prep_proc = ->(input) { input.strip.to_i - 1 }
+      test = ->(int) { int == -2 || int.between?(0, number_of_saves - 1) }
+      OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
+    end
+
     def self.display_board(game_state, color)
       return display_for_white(game_state) if color == "w"
 

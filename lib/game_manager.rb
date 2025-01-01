@@ -5,6 +5,8 @@ require_relative("player")
 require_relative("input_validation")
 require_relative("ui")
 
+require "json"
+
 module OdinChess
   # class that stores logic for interacting with user
   class GameManager
@@ -15,7 +17,6 @@ module OdinChess
         take_turn
       elsif choice == "L"
         load_game
-        take_turn
       end
     end
 
@@ -24,10 +25,6 @@ module OdinChess
       @player2 = OdinChess::Player.new
       player1_is_first = player_setup
       @game_board = OdinChess::GameBoard.new(@player1, @player2, player1_is_first)
-    end
-
-    def load_game
-      raise "load unimplemented"
     end
 
     def player_setup
@@ -57,9 +54,38 @@ module OdinChess
       OdinChess::UI.display_board(@game_board.game_state, @game_board.active_color)
     end
 
+    def grab_saves
+      file = File.read("saves.json")
+      JSON.parse(file)
+    end
+
     def save_quit
-      puts "not saved and quit"
+      saves = grab_saves
+      saves.push(@game_board.to_json)
+      File.write("saves.json", JSON.pretty_generate(saves))
       play_game
+    end
+
+    def load_game
+      saves = grab_saves
+      display_saves(saves)
+      save_to_play = OdinChess::UI.grab_save_selection(saves.length)
+      return play_game if save_to_play == -2
+
+      @game_board = OdinChess::GameBoard.new(0, 0, false)
+      @game_board.from_json(saves[save_to_play])
+      saves.delete_at(save_to_play)
+      File.write("saves.json", JSON.pretty_generate(saves))
+      take_turn
+    end
+
+    def display_saves(saves)
+      saves.each_with_index do |save, i|
+        puts "Load game #{i + 1}: "
+        game = OdinChess::GameBoard.new(0, 0, false)
+        game.from_json(save)
+        OdinChess::UI.display_board(game.game_state, game.active_color)
+      end
     end
   end
 end

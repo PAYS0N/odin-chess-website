@@ -28,6 +28,51 @@ module OdinChess
       setup_game_state
     end
 
+    def to_json(*_args)
+      { player1: @player1.to_obj,
+        player2: @player2.to_obj,
+        active_player: (@active_player == @player1 ? 1 : 2),
+        game_state: state_to_obj,
+        in_check: @in_check }.to_json
+    end
+
+    def state_to_obj
+      state = []
+      8.times do
+        state.push([])
+      end
+      0.upto(7) do |i|
+        0.upto(7) do |j|
+          state[i][j] = @game_state[i][j].to_obj
+        end
+      end
+      state
+    end
+
+    def from_json(json_string)
+      obj = JSON.parse(json_string)
+      @player1 = OdinChess::Player.from_obj(obj["player1"])
+      @player2 = OdinChess::Player.from_obj(obj["player2"])
+      @active_player = obj["active_player"] == 1 ? @player1 : @player2
+      @active_color = @active_player == @player1 ? "w" : "b"
+      @game_ended = false
+      @in_check = obj["in_check"]
+      @game_state = state_from_obj(obj["game_state"])
+    end
+
+    def state_from_obj(obj_arr)
+      state = []
+      8.times do
+        state.push([])
+      end
+      0.upto(7) do |i|
+        0.upto(7) do |j|
+          state[i][j] = Object.const_get(obj_arr[i][j]["class"]).from_obj(obj_arr[i][j])
+        end
+      end
+      state
+    end
+
     def setup_game_state
       setup_home_row(0, "w")
       setup_pawn_row(1, "w")
