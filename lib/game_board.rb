@@ -61,9 +61,22 @@ module OdinChess
       end
     end
 
+    def post_move_updates
+      swap_actives
+      update_pawns
+    end
+
     def swap_actives
       @active_color = (@active_color == "b" ? "w" : "b")
       @active_player = (@active_player == @player1 ? @player2 : @player1)
+    end
+
+    def update_pawns
+      @game_state.each do |row|
+        row.each do |piece|
+          piece.just_two_moved = false if piece.is_a?(OdinChess::Pawn) && piece.color == @active_color
+        end
+      end
     end
 
     def apply_move(move)

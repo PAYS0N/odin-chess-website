@@ -143,9 +143,11 @@ describe OdinChess::GameBoard do
         move = OdinChess::Move.from_string("e2e4")
         board_pawns.valid?(move)
         board_pawns.apply_move(move)
+        board_pawns.update_pawns
         move = OdinChess::Move.from_string("e4e5")
         board_pawns.valid?(move)
         board_pawns.apply_move(move)
+        board_pawns.update_pawns
       end
       it "pawn moved to cell" do
         is_pawn = board_pawns.game_state[4][4].is_a?(OdinChess::Pawn)
@@ -166,10 +168,11 @@ describe OdinChess::GameBoard do
         move = OdinChess::Move.from_string("e2e4")
         board_pawns.valid?(move)
         board_pawns.apply_move(move)
-        board_pawns.swap_actives
+        board_pawns.post_move_updates
         move = OdinChess::Move.from_string("e7e6")
         board_pawns.valid?(move)
         board_pawns.apply_move(move)
+        board_pawns.post_move_updates
       end
       it "pawn unmoved" do
         is_pawn = board_pawns.game_state[3][4].is_a?(OdinChess::Pawn)
@@ -190,9 +193,11 @@ describe OdinChess::GameBoard do
         move = OdinChess::Move.from_string("e2e4")
         board_pawns.valid?(move)
         board_pawns.apply_move(move)
+        board_pawns.update_pawns
         move = OdinChess::Move.from_string("d2d4")
         board_pawns.valid?(move)
         board_pawns.apply_move(move)
+        board_pawns.post_move_updates
       end
       it "other pawn moved to cell" do
         is_pawn = board_pawns.game_state[3][3].is_a?(OdinChess::Pawn)
