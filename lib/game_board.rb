@@ -228,31 +228,18 @@ module OdinChess
     end
 
     def piece_at_cell(piece_class, cell)
-      passes = @game_state[cell[0]][cell[1]].is_a?(piece_class)
-      unless passes
-        puts "The piece you indicated #{piece_class} is not at that starting cell [#{cell[0]}, #{cell[1]}]. #{@game_state[cell[0]][cell[1]].piece_to_s.strip} is."
-      end
-      passes
+      @game_state[cell[0]][cell[1]].is_a?(piece_class)
     end
 
     def piece_correct_color(cell)
-      passes = @game_state[cell[0]][cell[1]].color == @active_color
-      puts "The piece you indicated is not yours." unless passes
-      passes
+      @game_state[cell[0]][cell[1]].color == @active_color
     end
 
     def target_cell_ok(cell, move_is_capture)
-      unless move_is_capture
-        passes = @game_state[cell[0]][cell[1]].is_a?(EmptyPiece)
-        puts "That cell is occupied by #{@game_state[cell[0]][cell[1]]}." unless passes
-
-        return passes
-      end
+      return @game_state[cell[0]][cell[1]].is_a?(EmptyPiece) unless move_is_capture
 
       target_color = @active_color == "w" ? "b" : "w"
-      passes = @game_state[cell[0]][cell[1]].color == target_color
-      puts "You can only take #{target_color} pieces." unless passes
-      passes
+      @game_state[cell[0]][cell[1]].color == target_color
     end
 
     def piece_can_move(move)
@@ -261,9 +248,7 @@ module OdinChess
               else
                 @game_state[move.row][move.col].grab_available_moves(@game_state, [move.row, move.col])
               end
-      passes = cells.include?([move.target_row, move.target_col])
-      puts "That piece can only go to #{cells.inspect}." unless passes
-      passes
+      cells.include?([move.target_row, move.target_col])
     end
 
     def move_doesnt_lose(move)
