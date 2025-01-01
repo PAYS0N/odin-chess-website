@@ -2,6 +2,7 @@
 
 require_relative("piece")
 require_relative("move")
+require_relative("ui")
 
 require "json"
 
@@ -62,6 +63,7 @@ module OdinChess
     end
 
     def post_move_updates
+      promote_pawns
       swap_actives
       update_pawns
     end
@@ -76,6 +78,17 @@ module OdinChess
         row.each do |piece|
           piece.just_two_moved = false if piece.is_a?(OdinChess::Pawn) && piece.color == @active_color
         end
+      end
+    end
+
+    def promote_pawns
+      row = (@active_color == "w" ? 7 : 0)
+      @game_state[row].each_with_index do |piece, j|
+        next unless piece.is_a?(OdinChess::Pawn)
+
+        class_letter = OdinChess::UI.grab_promotion_class
+        class_type = OdinChess::Piece.grab_class_from_letter(class_letter)
+        @game_state[row][j] = class_type.new(@active_color)
       end
     end
 

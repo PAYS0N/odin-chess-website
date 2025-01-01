@@ -38,6 +38,14 @@ module OdinChess
       OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
     end
 
+    def self.grab_promotion_class
+      prompt = "What would you like to promote your pawn to?"
+      error_msg = "Please enter the character for a non-pawn piece."
+      prep_proc = ->(input) { input.strip }
+      test = ->(str) { %w[R B N Q].include?(str) }
+      OdinChess::InputValidation.verify_input(prompt, error_msg, prep_proc, test)
+    end
+
     def self.display_board(game_state, color)
       return display_for_white(game_state) if color == "w"
 
